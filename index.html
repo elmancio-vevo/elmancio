@@ -525,6 +525,128 @@
         }
 
 
+
+        /* =========================
+           MINI SUDOKU
+        ========================= */
+
+        .sudoku-widget {
+            text-align: center;
+        }
+
+        .sudoku-timer {
+            font-family: "Courier New", monospace;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #sudoku {
+            width: min(300px, 100%);
+            aspect-ratio: 1 / 1;
+            margin: 0 auto 14px;
+
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+
+            border: 3px solid #171717;
+            background: #171717;
+        }
+
+        .sudoku-cell {
+            min-width: 0;
+            min-height: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #fff;
+
+            border-right: 1px solid #999;
+            border-bottom: 1px solid #999;
+        }
+
+        .sudoku-cell input {
+            width: 100%;
+            height: 100%;
+
+            padding: 0;
+
+            border: none;
+            outline: none;
+
+            background: transparent;
+
+            text-align: center;
+
+            font-family: "Courier New", monospace;
+            font-size: clamp(15px, 3vw, 21px);
+            font-weight: bold;
+
+            color: #171717;
+        }
+
+        .sudoku-cell.fixed {
+            background: #ead9c8;
+        }
+
+        .sudoku-cell.fixed input {
+            cursor: default;
+        }
+
+        .sudoku-cell.block-right {
+            border-right: 3px solid #171717;
+        }
+
+        .sudoku-cell.block-bottom {
+            border-bottom: 3px solid #171717;
+        }
+
+        .sudoku-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .sudoku-buttons button {
+            padding: 7px 10px;
+
+            color: #171717;
+            background: #f5c06a;
+
+            border: 2px solid #171717;
+
+            font-size: 11px;
+            font-weight: bold;
+
+            cursor: pointer;
+
+            box-shadow: 2px 2px 0 #171717;
+        }
+
+        .sudoku-buttons button:hover {
+            position: relative;
+            top: 1px;
+            left: 1px;
+            box-shadow: 1px 1px 0 #171717;
+        }
+
+        .sudoku-message {
+            min-height: 18px;
+            margin-top: 10px;
+
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .sudoku-note {
+            margin-top: 8px;
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
         /* =========================
            MOBILE
         ========================= */
@@ -613,7 +735,7 @@
         </h1>
 
         <p>
-            Ciao! Questo è il mio piccolo angolo di Internet.
+            Ciao ! Questo è il mio piccolo angolo di Internet.
             Qui dentro troverai pensieri, viaggi, musica,
             fotografie, curiosità e qualsiasi altra cosa
             mi passi per la testa.
@@ -834,6 +956,40 @@
             </div>
 
 
+
+            <!-- MINI SUDOKU -->
+
+            <div class="widget">
+
+                <div class="widget-title">
+                    ▦ Mini Sudoku
+                </div>
+
+                <div class="widget-content sudoku-widget">
+
+                    <div class="sudoku-timer" id="sudokuTimer">
+                        00:00
+                    </div>
+
+                    <div id="sudoku"></div>
+
+                    <div class="sudoku-buttons">
+                        <button onclick="checkSudoku()">CHECK</button>
+                        <button onclick="newSudoku()">NEW GAME</button>
+                        <button onclick="giveSudokuHint()">HINT</button>
+                    </div>
+
+                    <div class="sudoku-message" id="sudokuMessage"></div>
+
+                    <div class="sudoku-note">
+                        6 × 6 · NUMBERS 1—6
+                    </div>
+
+                </div>
+
+            </div>
+
+
         </div>
 
     </div>
@@ -930,6 +1086,275 @@ function updateClock() {
 updateClock();
 
 setInterval(updateClock, 1000);
+
+
+
+/* =========================
+   MINI SUDOKU
+========================= */
+
+const SUDOKU_SIZE = 6;
+
+let sudokuSolution = [];
+let sudokuPuzzle = [];
+
+let sudokuSeconds = 0;
+let sudokuTimerInterval;
+
+
+function generateSudokuSolution() {
+
+    const grid = Array.from(
+        { length: SUDOKU_SIZE },
+        () => Array(SUDOKU_SIZE).fill(0)
+    );
+
+
+    function valid(row, col, number) {
+
+        for (let c = 0; c < SUDOKU_SIZE; c++) {
+            if (grid[row][c] === number) return false;
+        }
+
+        for (let r = 0; r < SUDOKU_SIZE; r++) {
+            if (grid[r][col] === number) return false;
+        }
+
+        const startRow = Math.floor(row / 2) * 2;
+        const startCol = Math.floor(col / 3) * 3;
+
+        for (let r = startRow; r < startRow + 2; r++) {
+            for (let c = startCol; c < startCol + 3; c++) {
+                if (grid[r][c] === number) return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    function solve() {
+
+        for (let row = 0; row < SUDOKU_SIZE; row++) {
+
+            for (let col = 0; col < SUDOKU_SIZE; col++) {
+
+                if (grid[row][col] === 0) {
+
+                    const numbers = [1, 2, 3, 4, 5, 6];
+
+                    numbers.sort(() => Math.random() - 0.5);
+
+                    for (const number of numbers) {
+
+                        if (valid(row, col, number)) {
+
+                            grid[row][col] = number;
+
+                            if (solve()) return true;
+
+                            grid[row][col] = 0;
+                        }
+                    }
+
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    solve();
+
+    return grid;
+}
+
+
+function createSudokuPuzzle() {
+
+    sudokuSolution = generateSudokuSolution();
+
+    sudokuPuzzle = sudokuSolution.map(row => [...row]);
+
+    let removed = 0;
+    const cellsToRemove = 24;
+
+    while (removed < cellsToRemove) {
+
+        const row = Math.floor(Math.random() * SUDOKU_SIZE);
+        const col = Math.floor(Math.random() * SUDOKU_SIZE);
+
+        if (sudokuPuzzle[row][col] !== 0) {
+
+            sudokuPuzzle[row][col] = 0;
+            removed++;
+        }
+    }
+}
+
+
+function drawSudoku() {
+
+    const container = document.getElementById("sudoku");
+
+    container.innerHTML = "";
+
+    for (let row = 0; row < SUDOKU_SIZE; row++) {
+
+        for (let col = 0; col < SUDOKU_SIZE; col++) {
+
+            const cell = document.createElement("div");
+            cell.className = "sudoku-cell";
+
+            if (col === 2) {
+                cell.classList.add("block-right");
+            }
+
+            if (row === 1 || row === 3) {
+                cell.classList.add("block-bottom");
+            }
+
+            const input = document.createElement("input");
+
+            input.type = "text";
+            input.maxLength = 1;
+            input.inputMode = "numeric";
+
+            if (sudokuPuzzle[row][col] !== 0) {
+
+                input.value = sudokuPuzzle[row][col];
+
+                cell.classList.add("fixed");
+
+                input.readOnly = true;
+            }
+
+            input.addEventListener("input", function() {
+
+                this.value = this.value.replace(/[^1-6]/g, "");
+
+                document.getElementById("sudokuMessage").textContent = "";
+            });
+
+            cell.appendChild(input);
+            container.appendChild(cell);
+        }
+    }
+}
+
+
+function checkSudoku() {
+
+    const inputs = document.querySelectorAll("#sudoku .sudoku-cell input");
+
+    let complete = true;
+    let correct = true;
+
+    inputs.forEach((input, index) => {
+
+        const row = Math.floor(index / SUDOKU_SIZE);
+        const col = index % SUDOKU_SIZE;
+
+        if (input.value === "") {
+            complete = false;
+            return;
+        }
+
+        if (Number(input.value) !== sudokuSolution[row][col]) {
+            correct = false;
+        }
+    });
+
+
+    const message = document.getElementById("sudokuMessage");
+
+    if (!complete) {
+        message.textContent = "Mancano ancora alcune caselle.";
+        return;
+    }
+
+    if (!correct) {
+        message.textContent = "Qualcosa non torna... riprova.";
+        return;
+    }
+
+    message.textContent = "★ SUDOKU COMPLETATO! ★";
+
+    clearInterval(sudokuTimerInterval);
+}
+
+
+function giveSudokuHint() {
+
+    const inputs = document.querySelectorAll("#sudoku .sudoku-cell input");
+
+    const empty = [];
+
+    inputs.forEach((input, index) => {
+
+        if (input.value === "") {
+            empty.push(index);
+        }
+    });
+
+    if (empty.length === 0) return;
+
+    const index = empty[Math.floor(Math.random() * empty.length)];
+
+    const row = Math.floor(index / SUDOKU_SIZE);
+    const col = index % SUDOKU_SIZE;
+
+    inputs[index].value = sudokuSolution[row][col];
+
+    document.getElementById("sudokuMessage").textContent =
+        "Hint inserito ✓";
+}
+
+
+function newSudoku() {
+
+    clearInterval(sudokuTimerInterval);
+
+    sudokuSeconds = 0;
+
+    updateSudokuTimer();
+
+    createSudokuPuzzle();
+
+    drawSudoku();
+
+    document.getElementById("sudokuMessage").textContent = "";
+
+    sudokuTimerInterval = setInterval(() => {
+
+        sudokuSeconds++;
+
+        updateSudokuTimer();
+
+    }, 1000);
+}
+
+
+function updateSudokuTimer() {
+
+    const minutes =
+        Math.floor(sudokuSeconds / 60)
+            .toString()
+            .padStart(2, "0");
+
+    const seconds =
+        (sudokuSeconds % 60)
+            .toString()
+            .padStart(2, "0");
+
+    document.getElementById("sudokuTimer").textContent =
+        minutes + ":" + seconds;
+}
+
+
+newSudoku();
+
 
 </script>
 
